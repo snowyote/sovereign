@@ -4,7 +4,7 @@
 # Written by Tim Bishop, 2009.
 
 # Directories to backup (relative to /)
-DIRS="home root decrypted var/www var/lib/postgresql/9.1/main"
+DIRS="home root decrypted var/www"
 
 # Number of daily backups to keep
 DAILY=7
@@ -25,7 +25,7 @@ MONTHLY_DAY=01
 TARSNAP="/usr/local/bin/tarsnap"
 
 # Extra flags to pass to tarsnap
-EXTRA_FLAGS="-C /"
+EXTRA_FLAGS="-L -C /"
 
 # end of config
 
@@ -54,17 +54,18 @@ else
 	BACKUP="$YEAR$MOY$DOM-$TIME-daily"
 fi
 
-# Stop postgres
-monit stop postgres
+# Below command complains to stderr if postgres user cannot write to CWD
+cd /home/
+
+# Dump PostgreSQL to file
+umask 077
+sudo -u postgres pg_dumpall -c | gzip > /decrypted/postgresql-backup.sql.gz
 
 # Do backups
 for dir in $DIRS; do
 	echo "==> create $BACKUP-$dir"
 	$TARSNAP $EXTRA_FLAGS -c -f $BACKUP-$dir $dir
 done
-
-# Start postgres
-monit start postgres
 
 # Backups done, time for cleaning up old archives
 

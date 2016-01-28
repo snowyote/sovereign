@@ -5,9 +5,11 @@
 - name: Install OpenVPN and dependencies from apt
   apt: pkg={{ item }} state=installed
   with_items:
+    - dnsmasq
     - openvpn
     - udev
-    - dnsmasq
+  tags:
+    - dependencies
 
 - name: Generate RSA keys for the CA and Server
   command: openssl genrsa -out {{ item }}.key {{ openvpn_key_size }}
@@ -50,12 +52,12 @@
             dest={{ openvpn_path }}/openssl-server-certificate.cnf
 
 - name: Seed a blank database file that will be used when generating the Server's certificate
-  command: touch {{ openvpn_path }}/index.txt
-           creates={{ openvpn_path }}/index.txt
+  file: path={{ openvpn_path }}/index.txt
+        state=touch
 
 - name: Seed a serial file that will be used when generating the Server's certificate
-  shell: echo 01 > {{ openvpn_path }}/serial
-         creates={{ openvpn_path }}/serial
+  copy: content="01"
+        dest={{ openvpn_path }}/serial
 
 - name: Generate CSR for the Server
   command: openssl req -batch -extensions server -new -key server.key -out server.csr -config {{ openvpn_path }}/openssl-server-certificate.cnf
@@ -131,6 +133,10 @@
     - iptables -A FORWARD -j REJECT
     - iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o {{ ansible_default_ipv4.interface }} -j MASQUERADE
 
+- name: Allow OpenVPN through ufw
+  ufw: rule=allow port={{ openvpn_port }} proto={{ openvpn_protocol }}
+  tags: ufw
+
 - name: Copy OpenVPN configuration file into place
   template: src=etc_openvpn_server.conf.j2 dest=/etc/openvpn/server.conf
   notify: restart openvpn
@@ -149,6 +155,8 @@
 
 - name: Copy the ca.crt and ta.key files that clients will need in order to connect to the OpenVPN server
   command: cp {{ openvpn_path }}/{{ item[1] }} {{ openvpn_path }}/{{ item[0] }}
+  tags:
+    - skip_ansible_lint
   with_nested:
     - openvpn_clients
     - ["ca.crt", "ta.key"]

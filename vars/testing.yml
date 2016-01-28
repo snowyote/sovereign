@@ -5,6 +5,7 @@
 ###############################################################################
 
 # common
+common_timezone: 'Etc/UTC'
 domain: sovereign.local
 main_user_name: sovereign
 encfs_password: testPassword
@@ -19,7 +20,9 @@ irc_nick: sovereign
 irc_ident: sovereign
 irc_realname: Mr. Sovereign
 irc_quitmsg: Bye
-irc_password_hash: "sha256#4bfc209c5e19874337fd89c80675ad194836efea5efd4189b7f73cd9e0a6094f#,i*Msa0B;w9yR23nm1ZB#" #foo
+irc_password_hash: "310c5f99825e80d5b1d663a0a993b8701255f16b2f6056f335ba6e3e720e57ed" #foo
+irc_password_salt: "YdlPM5yjBmc/;JO6cfL5"
+irc_timezone: "America/New_York" #Example: "America/New_York"
 
 # mailserver
 mail_db_password: testPassword
@@ -74,3 +77,7 @@ selfoss_username: "{{ main_user_name }}"
 # this is the sha512 hash of the desired password
 selfoss_password_hash: "f7fbba6e0636f890e56fbbf3283e524c6fa3204ae298382d624741d0dc6638326e282c41be5e4254d8820772c5518a2c5a8c0c7f7eda19594a7eb539453e1ed7"
 # foo
+
+# wallabag
+wallabag_salt: testing
+wallabag_db_password: testPassword

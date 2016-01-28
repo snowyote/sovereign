@@ -39,6 +39,18 @@ class WebTests(unittest.TestCase):
         # 403 - Since there is no documents in the blog directory
         self.assertEquals(r.status_code, 403)
 
+    def test_mail_autoconfig_http_and_https(self):
+        """Email autoconfiguration XML file is accessible over both HTTP and HTTPS"""
+
+        # Test getting the file over HTTP and HTTPS
+        for proto in ['http', 'https']:
+            r = requests.get(proto + '://autoconfig.' + TEST_SERVER + '/mail/config-v1.1.xml')
+
+            # 200 - We should see the XML file
+            self.assertEquals(r.status_code, 200)
+            self.assertIn('application/xml', r.headers['Content-Type'])
+            self.assertIn('clientConfig version="1.1"', r.content)
+
     def test_webmail_http(self):
         """Webmail is redirecting to https and displaying login page"""
         r = requests.get('http://mail.' + TEST_SERVER)
@@ -112,16 +124,6 @@ class WebTests(unittest.TestCase):
             r.content
         )
 
-    def test_znc_http(self):
-        """ZNC web interface is displaying login page"""
-        # FIXME: requests won't verify sovereign.local with *.sovereign.local cert
-        r = requests.get('https://' + TEST_SERVER + ':6697', verify=False)
-        self.assertEquals(r.status_code, 200)
-        self.assertIn(
-            "Welcome to ZNC's web interface!",
-            r.content
-        )
-
     def test_cgit_http(self):
         """CGit web interface is displaying home page"""
         r = requests.get('http://git.' + TEST_SERVER, verify=False)
@@ -137,6 +139,22 @@ class WebTests(unittest.TestCase):
             r.content
         )
 
+    def test_newebe_http(self):
+        """Newebe is displaying home page"""
+        r = requests.get('http://newebe.' + TEST_SERVER, verify=False)
+
+        # We should be redirected to https
+        self.assertEquals(r.history[0].status_code, 301)
+        self.assertEquals(r.url, 'https://newebe.' + TEST_SERVER + '/')
+
+        # 200 - We should be at the repository page
+        self.assertEquals(r.status_code, 200)
+        self.assertIn(
+            'Newebe, Freedom to Share',
+            r.content
+        )
+
+
 class IRCTests(unittest.TestCase):
     def test_irc_auth(self):
         """ZNC is accepting encrypted logins"""
@@ -147,7 +165,7 @@ class IRCTests(unittest.TestCase):
 
         # Check the encryption parameters
         cipher, version, bits = ssl_sock.cipher()
-        self.assertEquals(cipher, 'AES256-SHA')
+        self.assertEquals(cipher, 'AES256-GCM-SHA384')
         self.assertEquals(version, 'TLSv1/SSLv3')
         self.assertEquals(bits, 256)
 
@@ -306,7 +324,7 @@ class MailTests(unittest.TestCase):
         )
 
         self.assertIn(
-            'DHE-RSA-AES256-SHA (256/256 bits)',  # Also matches ECDHE-...
+            'ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits)',
             data[0][1]
         )
 
@@ -343,7 +361,7 @@ class MailTests(unittest.TestCase):
         )
 
         self.assertIn(
-            'DHE-RSA-AES256-SHA (256/256 bits)',  # Also matches ECDHE-...
+            'ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits)',
             data[0][1]
         )
 

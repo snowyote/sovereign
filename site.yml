@@ -16,9 +16,11 @@
     - blog
     - ircbouncer
     - xmpp
-    - monitoring
     - owncloud
     - vpn
     - tarsnap
     - news
     - git
+    - newebe
+    - readlater
+    - monitoring  # Monitoring role should be last. See roles/monitoring/README.md
